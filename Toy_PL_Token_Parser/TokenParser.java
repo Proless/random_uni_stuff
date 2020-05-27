@@ -19,253 +19,170 @@ public class TokenParser {
 		Node result = new Node(0);
 
 		// start parsing the input
-		start(result);
+		try {
+			start(result);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			result = invalid();
+		}
 
 		return result;
 	}
 
 	// Grammar production methods
-	public static void start(Node tree) {
+	public static void start(Node tree) throws Exception {
 
 		// Tree construction logic
-		tree.setLabel("start");
+		// Idea: make each production method return its own Node of the tree instead of
+		// passing in the node of its parent.
 
 		// Parser logic
-
 		if (currentToken.equals("id") || currentToken.equals("read") || currentToken.equals("write")
 				|| currentToken.equals("input_end")) {
-			stmt_list(tree);
-			if (match("input_end")) {
-				addTokenNode(tree, "input_end");
-			} else {
-				tree = invalid();
-			}
+			stmt_list();
+			match("input_end");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void stmt_list(Node tree) {
+	public static void stmt_list() throws Exception {
 
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("stmt_list");
-		tree.addChild(nonTerminalNode);
 
 		// Parser logic
-
 		if (currentToken.equals("id") || currentToken.equals("read") || currentToken.equals("write")) {
-			stmt(nonTerminalNode);
-			stmt_list(nonTerminalNode);
+			stmt();
+			stmt_list();
 		} else if (currentToken.equals("ε")) {
-			if (match("ε")) {
-				addTokenNode(tree, "epsilon");
-			} else {
-				tree = invalid();
-			}
+			match("ε");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void stmt(Node tree) {
+	public static void stmt() throws Exception {
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("stmt");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("id")) {
-			if (match("id")) {
-				addTokenNode(tree, "id");
-			} else {
-				tree = invalid();
-			}
-			if (match(":=")) {
-				addTokenNode(tree, ":=");
-			} else {
-				tree = invalid();
-			}
-			expr(nonTerminalNode);
+			match("id");
+			match(":=");
+			expr();
 		} else if (currentToken.equals("read")) {
-			if (match("read")) {
-				addTokenNode(tree, "read");
-			} else {
-				tree = invalid();
-			}
-			if (match("id")) {
-				addTokenNode(tree, "id");
-			} else {
-				tree = invalid();
-			}
+			match("read");
+			match("id");
 		} else if (currentToken.equals("write")) {
-			if (match("write")) {
-				addTokenNode(tree, "write");
-			} else {
-				tree = invalid();
-			}
-			expr(nonTerminalNode);
+			match("write");
+			expr();
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void expr(Node tree) {
+	public static void expr() throws Exception {
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("expr");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("id") || currentToken.equals("digit") || currentToken.equals("(")) {
-			term(nonTerminalNode);
-			term_tail(nonTerminalNode);
+			term();
+			term_tail();
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void term(Node tree) {
+	public static void term() throws Exception {
 
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("term");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("id") || currentToken.equals("digit") || currentToken.equals("(")) {
-			factor(nonTerminalNode);
-			factor_tail(nonTerminalNode);
+			factor();
+			factor_tail();
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void term_tail(Node tree) {
+	public static void term_tail() throws Exception {
 
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("term_tail");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("+") || currentToken.equals("-")) {
-			add_op(nonTerminalNode);
-			term(nonTerminalNode);
-			term_tail(nonTerminalNode);
+			add_op();
+			term();
+			term_tail();
 
 		} else if (currentToken.equals(")") || currentToken.equals("read") || currentToken.equals("write")
 				|| currentToken.equals("input_end")) {
-			if (match("ε")) {
-				addTokenNode(tree, "epsilon");
-			} else {
-				tree = invalid();
-			}
+			match("ε");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void factor(Node tree) {
+	public static void factor() throws Exception {
 
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("factor");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("id")) {
-			if (match("id")) {
-				addTokenNode(tree, "id");
-			} else {
-				tree = invalid();
-			}
+			match("id");
 		} else if (currentToken.equals("digit")) {
-			if (match("digit")) {
-				addTokenNode(tree, "digit");
-			} else {
-				tree = invalid();
-			}
+			match("digit");
 		} else if (currentToken.equals("(")) {
-			if (match("(")) {
-				addTokenNode(tree, "(");
-			} else {
-				tree = invalid();
-			}
-			expr(nonTerminalNode);
-			if (match(")")) {
-				addTokenNode(tree, ")");
-			} else {
-				tree = invalid();
-			}
+			match("(");
+			expr();
+			match(")");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void factor_tail(Node tree) {
+	public static void factor_tail() throws Exception {
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("factor_tail");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("*") || currentToken.equals("/")) {
-			mult_op(nonTerminalNode);
-			factor(nonTerminalNode);
-			factor_tail(nonTerminalNode);
+			mult_op();
+			factor();
+			factor_tail();
 
 		} else if (currentToken.equals("+") || currentToken.equals("-") || currentToken.equals(")")
 				|| currentToken.equals("id") || currentToken.equals("write") || currentToken.equals("read")
 				|| currentToken.equals("input_end")) {
-			if (match("ε")) {
-				addTokenNode(tree, "epsilon");
-			} else {
-				tree = invalid();
-			}
+			match("ε");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void add_op(Node tree) {
+	public static void add_op() throws Exception {
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("add_op");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("+")) {
-			if (match("+")) {
-				addTokenNode(tree, "+");
-			} else {
-				tree = invalid();
-			}
+			match("+");
 		} else if (currentToken.equals("-")) {
-			if (match("-")) {
-				addTokenNode(tree, "-");
-			} else {
-				tree = invalid();
-			}
+			match("-");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
-	public static void mult_op(Node tree) {
+	public static void mult_op() throws Exception {
 
 		// Tree construction logic
-		Node nonTerminalNode = new Node(tree.getId() + 1);
-		nonTerminalNode.setLabel("mult_op");
-		tree.addChild(nonTerminalNode);
 
+		// Parser logic
 		if (currentToken.equals("*")) {
-			if (match("*")) {
-				addTokenNode(tree, "*");
-			} else {
-				tree = invalid();
-			}
+			match("*");
 		} else if (currentToken.equals("/")) {
-			if (match("/")) {
-				addTokenNode(tree, "/");
-			} else {
-				tree = invalid();
-			}
+			match("/");
 		} else {
-			tree = invalid();
+			parse_error();
 		}
 	}
 
@@ -276,16 +193,14 @@ public class TokenParser {
 		return invalidNode;
 	}
 
-	public static boolean match(String expected) {
+	public static void match(String expected) throws Exception {
 		if (currentToken == expected) {
 			tokenIndex++;
-			if (tokenIndex != inputList.size()) {
-				currentToken = inputList.get(tokenIndex);
-			}
-			return true;
+			currentToken = inputList.get(tokenIndex);
 		} else {
-			return false;
+			parse_error();
 		}
+
 	}
 
 	public static void reset() {
@@ -294,9 +209,7 @@ public class TokenParser {
 		inputList = null;
 	}
 
-	public static void addTokenNode(Node tree, String token) {
-		Node tokenNode = new Node(tree.getId() + 1);
-		tokenNode.setLabel(token);
-		tree.addChild(tokenNode);
+	public static void parse_error() throws Exception {
+		throw new Exception("Parsing error, the input is not valid.");
 	}
 }
